@@ -1,9 +1,22 @@
+using Microsoft.EntityFrameworkCore;
+using PubAPI;
+using PublisherData;
+using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<PubContext>(
+       opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("PubConnection"))
+       .EnableSensitiveDataLogging()
+       .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 
 var app = builder.Build();
 
@@ -13,8 +26,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
 
 var summaries = new[]
 {
@@ -35,6 +46,8 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();
+
+app.MapAuthorEndpoints();
 
 app.Run();
 
